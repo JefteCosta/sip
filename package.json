@@ -1,0 +1,56 @@
+{
+  "name": "@sip",
+  "version": "0.0.1",
+  "description": "Package para implementasão do protocolo sip em nodejs com typescript",
+  "type": "module",
+  "main": "dist/server.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo 'teste ok!'",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/server.js",
+    "prepublishOnly": "npm run build",
+    "prepare": "husky",
+    "commitlint": "commitlint --edit",
+    "commit": "cz"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JefteCosta/sip.git"
+  },
+  "keywords": [
+    "sip",
+    "voip",
+    "telecom",
+    "telefonia",
+    "servidor sip"
+  ],
+  "author": "JefteCosta <jefteamorim@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.12",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.1.4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "husky": {
+  "hooks": {
+    "prepare-commit-msg": "exec < /dev/tty && npx cz --hook || true"
+  }
+}
+}
