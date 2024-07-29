@@ -1,7 +1,7 @@
-import { IProxy } from '../interfaces/IProxy';
-import SIPParser from './SIPParser';
-import Transport from './Transport';
-import Authenticator from './Authenticator';
+import { IProxy } from '#interfaces/IProxy';
+import SIPParser from '#services/SIPParser';
+import Transport from '#services/Transport';
+import Authenticator from '#services/Authenticator';
 
 class Proxy implements IProxy {
     private contexts: { [key: string]: any } = {};
@@ -97,48 +97,57 @@ class Proxy implements IProxy {
                 ctx.cancellers[via.params.branch] = () => this.sendCancel(rq, via, route);
 
                 if (ctx.cancelled) this.sendCancel(rq, via, route);
-            } else {
-                delete ctx.cancellers[rs.headers.via[0].params.branch];
+            } else if (!ctx.cancelled) {
+                delete ctx.cancellers;
             }
-
             callback(rs, remote);
         });
     }
 
-    private onRequest(rq: any, route: any, remote: any): void {
-        const id = this.makeContextId(rq);
-        this.contexts[id] = { cancellers: {} };
+    private getTarget(msg: any): any {
+        const uri = msg.uri || msg.headers.contact[0].uri;
+        let protocol = 'UDP'; // Default protocol
 
-        try {
-            route(this.sipParser.parseMessage(rq), remote);
-        } catch (e) {
-            delete this.contexts[id];
-            throw e;
+        if (uri.match(/^sips:/)) {
+            protocol = 'TLS';
+        } else if (uri.match(/^ws:/)) {
+            protocol = 'WS';
+        } else if (uri.match(/^wss:/)) {
+            protocol = 'WSS';
+        } else if (uri.match(/^tcp:/)) {
+            protocol = 'TCP';
+        } else if (uri.match(/^tls:/)) {
+            protocol = 'TLS';
         }
+
+        const addressMatch = uri.match(/^(?:sip|sips|ws|wss|tcp|tls):(?:[^@]*@)?([^;]+)/);
+        const address = addressMatch ? addressMatch[1] : null;
+
+        const portMatch = uri.match(/^(?:sip|sips|ws|wss|tcp|tls):(?:[^@]*@)?([^:;]+):(\d+)/);
+        const port = portMatch ? +portMatch[2] : this.transport.defaultPort(protocol);
+
+        return {
+            protocol,
+            address,
+            port,
+        };
     }
 
-    private getTarget(msg: any) {
-        let hop = this.sipParser.parseUri(msg.uri);
-        if (typeof msg.headers.route === 'string') {
-            try {
-                msg.headers.route = this.sipParser.parsers.route({ s: msg.headers.route, i: 0 });
-            } catch (e) {
-                msg.headers.route = undefined;
-            }
-        }
+    private onRequest(
+        rq: any,
+        route: (rq: any, remote: any) => void,
+        remote: any
+    ): void {
+        const ctx = (this.contexts[this.makeContextId(rq)] = {
+            cancelled: false,
+            cancellers: {},
+        });
 
-        if (msg.headers.route && msg.headers.route.length > 0) {
-            hop = this.sipParser.parseUri(msg.headers.route[0].uri);
-            if (hop.host === this.transport.getLocalAddress() && hop.port === this.transport.getPort()) {
-                msg.headers.route.shift();
-            } else if (hop.params.lr === undefined) {
-                msg.headers.route.shift();
-                msg.headers.route.push({ uri: msg.uri });
-                msg.uri = hop;
-            }
-        }
-
-        return hop;
+        this.transport.send(
+            this.getTarget(rq),
+            this.sipParser.makeResponse(rq, 100)
+        );
+        route(rq, remote);
     }
 }
 

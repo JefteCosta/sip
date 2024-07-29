@@ -1,4 +1,4 @@
-import { Request, Response } from './models';
+import { Request, Response } from '#models/index';
 
 interface Transaction {
     id: string;

@@ -1,6 +1,6 @@
-import crypto from 'crypto';
-import { IAuthenticator } from '../interfaces/IAuthenticator';
-import { Utils } from '../utils/Utils';
+import * as crypto from 'node:crypto';
+import { IAuthenticator } from '#interfaces/IAuthenticator';
+import { Utils } from '#utils/Utils';
 
 class Authenticator implements IAuthenticator {
     private kd(...args: string[]): string {

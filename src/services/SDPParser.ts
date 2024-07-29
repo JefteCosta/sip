@@ -1,4 +1,4 @@
-import { ISDPParser } from '../interfaces/ISDPParser';
+import { ISDPParser } from '#interfaces/ISDPParser';
 
 class SDPParser implements ISDPParser {
     private parsers: { [key: string]: (data: string) => any } = {

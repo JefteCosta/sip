@@ -4,8 +4,8 @@ import dgram from 'dgram';
 import WebSocket from 'ws';
 import os from 'os';
 import crypto from 'crypto';
-import { ITransport } from '../interfaces/ITransport';
-import SIPParser from './SIPParser';
+import { ITransport } from '#interfaces/ITransport';
+import SIPParser from '#services/SIPParser';
 
 class Transport implements ITransport {
     private protocols: { [key: string]: any } = {};
@@ -41,16 +41,28 @@ class Transport implements ITransport {
     }
 
     open(target: any, error: any): any {
-        return this.wrap(this.protocols[target.protocol.toUpperCase()].open(target, error), target);
+        const protocol = target.protocol ? target.protocol.toUpperCase() : null;
+        if (!protocol || !this.protocols[protocol]) {
+            throw new Error(`Unsupported protocol: ${target.protocol}`);
+        }
+        return this.wrap(this.protocols[protocol].open(target, error), target);
     }
 
     get(target: any, error: any): any {
-        const flow = this.protocols[target.protocol.toUpperCase()].get(target, error);
+        const protocol = target.protocol ? target.protocol.toUpperCase() : null;
+        if (!protocol || !this.protocols[protocol]) {
+            throw new Error(`Unsupported protocol: ${target.protocol}`);
+        }
+        const flow = this.protocols[protocol].get(target, error);
         return flow && this.wrap(flow, target);
     }
 
     send(target: any, message: any, callback?: (rs: any, remote: any) => void): void {
-        const cn = this.open(target, undefined);
+        const cn = this.open(target, (err: any) => {
+            if (err) {
+                this.options.logger.error(err);
+            }
+        });
         try {
             cn.send(message);
             if (callback) {
@@ -170,8 +182,8 @@ class Transport implements ITransport {
             const queue: any[] = [];
             let refs = 0;
 
-            const send_connecting = (m: any) => queue.push(this.sipParser.stringify(m));
-            const send_open: any = (m: any) => socket.send(Buffer.from(typeof m === 'string' ? m : this.sipParser.stringify(m), 'binary'));
+            const send_connecting: any = (m: any) => queue.push(this.sipParser.stringify(m));
+            const send_open = (m: any) => socket.send(Buffer.from(typeof m === 'string' ? m : this.sipParser.stringify(m), 'binary'));
             let send = send_connecting;
 
             socket.on('open', () => {
@@ -213,11 +225,11 @@ class Transport implements ITransport {
             server.on('connection', init);
         }
 
-        const get = (flow: any) => {
+        const get = (flow: any, error: any) => {
             const ws = flows[[flow.address, flow.port, flow.local.address, flow.local.port].join()];
             if (ws) {
                 return {
-                    send: (m: any) => ws.send(this.sipParser.stringify(m)),
+                    send: (m: any) => ws.send(Buffer.from(this.sipParser.stringify(m), 'binary')),
                     release: () => {},
                     protocol: 'WS',
                 };
@@ -225,7 +237,7 @@ class Transport implements ITransport {
         };
 
         const open = (target: any, onError: any) => {
-            if (target.local) return get(target);
+            if (target.local) return get(target, onError);
             else return makeClient('ws://' + target.host + ':' + target.port)(onError);
         };
 
@@ -242,7 +254,7 @@ class Transport implements ITransport {
 
         const init = (stream: net.Socket, remote: any) => {
             const remoteid = [remote.address, remote.port].join();
-            let flowid: any = undefined;
+            let flowid:any = undefined;
             let refs = 0;
 
             const register_flow = () => {

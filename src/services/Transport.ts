@@ -4,8 +4,8 @@ import dgram from 'dgram';
 import WebSocket from 'ws';
 import os from 'os';
 import crypto from 'crypto';
-import { ITransport } from '../interfaces/ITransport';
-import SIPParser from './SIPParser';
+import { ITransport } from '#interfaces/ITransport';
+import SIPParser from '#services/SIPParser';
 
 class Transport implements ITransport {
     private protocols: { [key: string]: any } = {};
@@ -159,7 +159,7 @@ class Transport implements ITransport {
             flows[flowid] = ws;
 
             ws.on('close', () => delete flows[flowid]);
-            ws.on('message', (data: any) => {
+            ws.on('message', (data) => {
                 const msg = this.sipParser.parseMessage(data);
                 if (msg) {
                     this.callback(msg, { protocol: 'WS', address: remote.address, port: remote.port, local });
@@ -175,7 +175,7 @@ class Transport implements ITransport {
             let refs = 0;
 
             const send_connecting = (m: any) => queue.push(this.sipParser.stringify(m));
-            const send_open: any = (m: any) => socket.send(Buffer.from(typeof m === 'string' ? m : this.sipParser.stringify(m), 'binary'));
+            const send_open = (m: any) => socket.send(Buffer.from(typeof m === 'string' ? m : this.sipParser.stringify(m), 'binary'));
             let send = send_connecting;
 
             socket.on('open', () => {
@@ -246,7 +246,7 @@ class Transport implements ITransport {
 
         const init = (stream: net.Socket, remote: any) => {
             const remoteid = [remote.address, remote.port].join();
-            let flowid: any = undefined;
+            let flowid = undefined;
             let refs = 0;
 
             const register_flow = () => {
@@ -393,7 +393,7 @@ class Transport implements ITransport {
         );
     }
 
-    private defaultPort(proto: string) {
+    defaultPort(proto: string) {
         return proto.toUpperCase() === 'TLS' ? 5061 : 5060;
     }
 }

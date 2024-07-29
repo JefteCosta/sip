@@ -1,5 +1,5 @@
 import util from 'util';
-import { ISIPParser } from '../interfaces/ISIPParser';
+import { ISIPParser } from '#interfaces/ISIPParser';
 
 class SIPParser implements ISIPParser {
     parse(data: string): any {
@@ -16,7 +16,7 @@ class SIPParser implements ISIPParser {
             const r = parts[i].match(/^([\S]*?)\s*:\s*([\s\S]*)$/);
             if (!r) return;
 
-            const name = unescape(r[1]).toLowerCase();
+            const name = decodeURIComponent(r[1]).toLowerCase();
             const headerName = this.compactForm[name] || name;
 
             try {

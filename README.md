@@ -2,3 +2,12 @@
 
 # sip
 A SIP server implemented in TypeScript
+
+## My SIP Server
+
+A SIP server implemented in TypeScript.
+
+### Installation
+
+```bash
+npm install @sip
