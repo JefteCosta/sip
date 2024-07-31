@@ -20,14 +20,13 @@ export interface OptionsData {
         error: (error: any) => void;
     };
 }
-export const authenticator = new Authenticator();
-export const sdpParser = new SDPParser();
-export const sipParser = new SIPParser();
+
 
 
 export function startServer(options: OptionsData) {
     const transactionManager = new TransactionManager();
-
+    
+    const sipParser = new SIPParser();
     const callback = (m: any, remote: any) => {
         console.log('Processing message:', m);
         // Implementação do processamento da mensagem recebida
