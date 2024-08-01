@@ -6,7 +6,7 @@ import Transport from '#services/Transport';
 
 import TransactionManager from '#src/TransactionManager';
 export interface OptionsData {
-    
+    protocol: string;
     port: number;
     address: string;
     publicAddress: string;

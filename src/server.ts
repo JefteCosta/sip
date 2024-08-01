@@ -6,6 +6,7 @@ import Transport from '#services/Transport';
 import TransactionManager from '#src/TransactionManager';
 
 interface ServerOptions {
+    protocol: string;
     port: number;
     address: string;
     publicAddress: string;
@@ -22,6 +23,7 @@ interface ServerOptions {
 
 // Configuração inicial
 const options: ServerOptions = {
+    protocol: 'udp',
     port: 5060,
     address: '0.0.0.0',
     publicAddress: 'example.com',

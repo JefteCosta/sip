@@ -3,8 +3,11 @@ import * as util from 'util';
 export interface IError extends Error {
     stack?: string;
 }
-interface UtilsIdentityFn<Type> {
-    (arg: Array<Type>): Array<Type>;
+interface Lengthwise {
+  length: number;
+}
+interface ToolsFn<Type extends Lengthwise> {
+    (arg: Type): Type;
   }
 
 export type StringBase64 = Buffer;
@@ -18,7 +21,7 @@ export const debug: Debug = (e: IError) => {
         util.debug(util.inspect(e));
     }
 };
-export const toBase64: UtilsIdentityFn<string> = (s: string[]) => { 
+export const toBase64: ToolsFn<string> = (s: string):string => { 
     switch(s.length % 3) {
     case 1:
       s += '  ';
@@ -32,6 +35,4 @@ export const toBase64: UtilsIdentityFn<string> = (s: string[]) => {
     return Buffer.from(s).toString('base64').replace(/\//g, '_').replace(/\+/g, '-');
   }
 
-  function identity<Type>(arg: Type): Type {
-    return arg;
-  }
+ 
